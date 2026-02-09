@@ -34,9 +34,9 @@ from config import (
     PROFILE_VIEW, LEADERBOARD, FACT_OF_DAY,
     CAREER_TEST, CAREER_TEST_PLAY,
 )
-from database import init_db, seed_default_data
+from database import init_db, seed_default_data, get_or_create_user
 
-from handlers.start import start, back_to_menu, help_command
+from handlers.start import start, back_to_menu, help_command, main_menu_keyboard, WELCOME_TEXT
 from handlers.education import education_menu, topic_sections, section_detail
 from handlers.quiz import quiz_list, quiz_start, quiz_answer, quiz_next
 from handlers.quest import quest_list, quest_begin, quest_hint, quest_answer
@@ -61,6 +61,45 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+async def reentry_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Re-enter conversation when user clicks a button but has no active state
+    (e.g. after bot restart on Railway)."""
+    query = update.callback_query
+    await query.answer()
+
+    user = update.effective_user
+    await get_or_create_user(user.id, user.username, user.first_name, user.last_name)
+    context.user_data.clear()
+
+    try:
+        await query.edit_message_text(
+            WELCOME_TEXT,
+            reply_markup=main_menu_keyboard(),
+            parse_mode="HTML",
+        )
+    except Exception:
+        await query.message.reply_text(
+            WELCOME_TEXT,
+            reply_markup=main_menu_keyboard(),
+            parse_mode="HTML",
+        )
+    return MAIN_MENU
+
+
+async def reentry_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Re-enter conversation when user sends text but has no active state."""
+    user = update.effective_user
+    await get_or_create_user(user.id, user.username, user.first_name, user.last_name)
+    context.user_data.clear()
+
+    await update.message.reply_text(
+        WELCOME_TEXT,
+        reply_markup=main_menu_keyboard(),
+        parse_mode="HTML",
+    )
+    return MAIN_MENU
+
+
 def build_conversation_handler() -> ConversationHandler:
     """Создаёт основной ConversationHandler со всеми состояниями."""
 
@@ -70,6 +109,8 @@ def build_conversation_handler() -> ConversationHandler:
     return ConversationHandler(
         entry_points=[
             CommandHandler("start", start),
+            CallbackQueryHandler(reentry_callback),
+            MessageHandler(filters.TEXT & ~filters.COMMAND, reentry_text),
         ],
         states={
             # ── Главное меню ──
@@ -272,7 +313,7 @@ def main():
     application.add_error_handler(error_handler)
 
     logger.info("Запуск бота в режиме Long Polling...")
-    application.run_polling(drop_pending_updates=True)
+    application.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":

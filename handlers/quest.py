@@ -115,16 +115,23 @@ async def _show_quest_step(query_or_message, context: ContextTypes.DEFAULT_TYPE,
 
 async def quest_hint(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    await query.answer()
 
     state = context.user_data.get("quest_state")
     if not state:
-        await query.answer()
         return MAIN_MENU
 
     step = state["steps"][state["current_step"]]
     hint = step.get("hint", "Подсказок нет для этого этапа.")
 
-    await query.answer(hint, show_alert=True)
+    keyboard = [
+        [InlineKeyboardButton("\u274c Выйти из квеста", callback_data="quest_list")],
+    ]
+    await query.message.reply_text(
+        f"\U0001f4a1 <b>Подсказка:</b>\n\n{hint}",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="HTML",
+    )
     return QUEST_PLAY
 
 
