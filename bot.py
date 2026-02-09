@@ -7,7 +7,9 @@
 
 import logging
 import sys
+import traceback
 
+from telegram import Update
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -237,6 +239,19 @@ async def post_init(application):
     await application.bot.set_my_commands(commands)
 
 
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
+    """Global error handler — logs the error and notifies the user."""
+    logger.error("Exception while handling an update:", exc_info=context.error)
+
+    if isinstance(update, Update) and update.effective_message:
+        try:
+            await update.effective_message.reply_text(
+                "⚠️ Произошла ошибка. Попробуй /start чтобы вернуться в меню."
+            )
+        except Exception:
+            pass
+
+
 def main():
     if not BOT_TOKEN:
         print("ОШИБКА: Не задан BOT_TOKEN!")
@@ -253,6 +268,7 @@ def main():
 
     conv_handler = build_conversation_handler()
     application.add_handler(conv_handler)
+    application.add_error_handler(error_handler)
 
     logger.info("Запуск бота в режиме Long Polling...")
     application.run_polling(drop_pending_updates=True)

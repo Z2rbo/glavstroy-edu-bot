@@ -133,7 +133,8 @@ async def get_user_stats(user_id: int):
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         cursor = await db.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
-        return dict(await cursor.fetchone()) if await cursor.fetchone() is None else None
+        row = await cursor.fetchone()
+        return dict(row) if row else None
 
 
 async def get_user(user_id: int):

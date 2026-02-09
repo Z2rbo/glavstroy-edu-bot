@@ -115,10 +115,10 @@ async def _show_quest_step(query_or_message, context: ContextTypes.DEFAULT_TYPE,
 
 async def quest_hint(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()
 
     state = context.user_data.get("quest_state")
     if not state:
+        await query.answer()
         return MAIN_MENU
 
     step = state["steps"][state["current_step"]]

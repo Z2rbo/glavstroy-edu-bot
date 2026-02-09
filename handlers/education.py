@@ -110,8 +110,13 @@ async def section_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     progress = f"({current_idx + 1}/{len(section_keys)})"
 
+    full_text = f"{section['text']}\n\n<i>{progress}</i>"
+    # Telegram ограничивает сообщения 4096 символами
+    if len(full_text) > 4000:
+        full_text = full_text[:3990] + "..."
+
     await query.edit_message_text(
-        f"{section['text']}\n\n<i>{progress}</i>",
+        full_text,
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode="HTML",
     )

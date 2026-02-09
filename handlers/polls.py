@@ -1,6 +1,6 @@
 """Опросы — встроенные Telegram-опросы."""
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputPollOption
 from telegram.ext import ContextTypes
 
 from config import MAIN_MENU, POLL_SELECT
@@ -49,11 +49,18 @@ async def poll_send(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     poll_data = POLLS[poll_idx]
 
-    # Отправляем нативный Telegram-опрос
+    # Удаляем сообщение с меню, чтобы не было визуального мусора
+    try:
+        await query.message.delete()
+    except Exception:
+        pass
+
+    # Отправляем нативный Telegram-опрос (PTB 22.x требует InputPollOption)
+    options = [InputPollOption(text=opt) for opt in poll_data["options"]]
     await context.bot.send_poll(
         chat_id=query.message.chat_id,
         question=poll_data["question"],
-        options=poll_data["options"],
+        options=options,
         is_anonymous=poll_data.get("is_anonymous", False),
         type="regular",
     )

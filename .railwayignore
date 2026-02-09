@@ -1,0 +1,8 @@
+avatar.png
+create_avatar.py
+setup_bot.py
+data/bot.db
+__pycache__/
+*.pyc
+.env
+.git/

@@ -81,3 +81,4 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "<i>Образовательный бот от Главстрой СПб</i>",
         parse_mode="HTML",
     )
+    return MAIN_MENU
